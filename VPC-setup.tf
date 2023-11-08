@@ -101,3 +101,72 @@ resource "aws_route_table_association" "private-asso" {
   subnet_id      = aws_subnet.private-subnet.id
   route_table_id = aws_route_table.pri-rt.id
 }
+
+resource "aws_security_group" "test_access" {
+  name        = "test_access"
+  description = "allow ssh and http"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+}
+
+resource "aws_key_pair" "mumbaikey3" {
+  key_name   = "mumbaikey3"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCvBynpqrremQuE0lokuFgMn0GAVI7VUxALey1HrLvxtfJOE1236GJTq2ECgbr6JnVMN7g9z66RHYqIUu/WU55bXeova/RYIYgWaaaGF603HORG6tLbnF74DBwa35/sK1sCh19dNEk9Wd/WCOAwJA6/mvj2l0jRt3Zg4OYh6ovEVfJag6cn4pfrTrEHSM8ytcYCAuBz/ZfGCAtPZC7oN3/qTELmArb3UZc4jdZqhcFdjOld4RgYBJzaRwYmMoRsC2cYsJK4mS4zSR4LkTxdiKCNAMzD09d1AlLR9a7snF32GfnntYcYQn7t1LXC+/JGhQwfjzpmfoXRu8HNQZ4GzSS+sdR8cQYIPjIYpippx06sX/XkKT/NbJhtxBdGyAOD4rpt11W1ZAa8i+vxkjAfB4R8d+flTKK/p/NG1FBXeQ/vUYVXviIScEYoeQ3bnNhIqqhyQe31juiOlEMdPbhyN1IujOn6y3zlE9C3DU9fwGqLbV8dBYrcPuPzO6BcHTMgGtE= root@ip-172-31-34-238.ap-south-1.compute.internal"
+}
+
+#ec2 code
+resource "aws_instance" "sanjay-server" {
+  ami             = "ami-05c13eab67c5d8861"
+  subnet_id       = aws_subnet.public-subnet.id
+  instance_type   = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.test_access.id]
+  key_name        = "mumbaikey3"
+  tags = {
+    Name     = "test-World"
+    Stage    = "testing"
+    Location = "chennai"
+  }
+
+}
+
+
+##create an EIP for EC2
+resource "aws_eip" "sanjay-ec2-eip" {
+  instance = "aws_instance.sanjay-server.id"
+}
+
+###this is database ec2 code
+resource "aws_instance" "gautam-server" {
+  ami             = "ami-05c13eab67c5d8861"
+  subnet_id       = aws_subnet.private-subnet.id
+  instance_type   = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.test_access.id]
+  key_name        = "mumbaikey3"
+  tags = {
+    Name     = "gautam-World"
+    Stage    = "stage-base"
+    Location = "delhi"
+  }
+}
